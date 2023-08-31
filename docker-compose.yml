@@ -273,27 +273,6 @@ services:
     networks:
       - microservice-network
 
-  filebeat:
-    build: 
-      context: filebeat/
-      args:
-        ELASTIC_VERSION: ${ELASTIC_VERSION}
-    container_name: filebeat
-    volumes:
-      - filebeat_data:/logs
-    ports:
-      - 5066:5066
-      - 50066:50066/tcp
-      - 50066:50066/udp
-    environment:
-      FB_JAVA_OPTS: -Xms256m -Xmx256m
-      FILEBEAT_INTERNAL_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD:-}
-    networks:
-      - microservice-network
-    depends_on:
-      - logstash
-    restart: unless-stopped
-
   config-server:
     image: ghcr.io/domehahn/config-server:latest
     container_name: config-server

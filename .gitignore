@@ -1,0 +1,10 @@
+/terraform/consul/.terraform/
+/terraform/consul/.terraform.lock.hcl
+/terraform/consul/terraform.tfstate
+/terraform/consul/terraform.tfstate.backup
+
+/terraform/vault/.terraform/
+/terraform/vault/.terraform.lock.hcl
+/terraform/vault/terraform.tfstate
+/terraform/vault/terraform.tfstate.backup
+.idea/
