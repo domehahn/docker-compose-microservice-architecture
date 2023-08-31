@@ -1,0 +1,47 @@
+# my global config
+global:
+  scrape_interval:     120s # By default, scrape targets every 15 seconds.
+  evaluation_interval: 120s # By default, scrape targets every 15 seconds.
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: 'prometheus'
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 5s
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+    static_configs:
+         - targets: ['prometheus:9090']
+  - job_name: 'Api Gateway'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 2s
+    static_configs:
+      - targets: ['api-gateway:8080']
+        labels:
+          application: 'Api Gateway'
+  - job_name: 'Config Server'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 2s
+    static_configs:
+      - targets: ['config-server:1234']
+        labels:
+          application: 'Config Server'
+  - job_name: 'consul-spring'
+    scrape_interval: 3s
+    consul_sd_configs:
+    - server: 'consul:8500'
+      services:
+      - data-service
+      - event-service
+      - api-gateway
+      - config-service
+    metrics_path: '/actuator/prometheus'
+    relabel_configs:
+      - source_labels: [__meta_consul_service_id]
+        regex: '(.*)-service'
+        replacement: '$1-service'
+        target_label: node
+      - source_labels: [__meta_consul_service_id]
+        target_label: instance
