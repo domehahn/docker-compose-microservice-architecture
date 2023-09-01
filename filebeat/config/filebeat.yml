@@ -1,0 +1,15 @@
+## Filebeat configuration
+## https://github.com/elastic/beats/blob/main/deploy/docker/filebeat.docker.yml
+#
+
+name: filebeat
+
+filebeat.inputs:
+- type: log
+  paths:
+    - /tmp/*.log
+
+output.logstash:
+  hosts: [ logstash:5044 ]
+  username: filebeat_internal
+  password: ${FILEBEAT_INTERNAL_PASSWORD}
