@@ -1,8 +1,3 @@
-provider "vault" {
-  address = "http://vault:8200"
-  token = "root"
-}
-
 resource "vault_kv_secret_v2" "api-gateway" {
   mount                      = "secret"
   name                       = "api-gateway"

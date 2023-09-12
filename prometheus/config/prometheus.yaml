@@ -15,19 +15,23 @@ scrape_configs:
     static_configs:
          - targets: ['prometheus:9090']
   - job_name: 'Api Gateway'
+    oauth2:
+      client_id: "gateway"
+      client_secret: "0V08sRa6gtkfr26rT5f3JoZwGxqxzmC2"
+      token_url: "http://keycloak:8080/realms/microservice/protocol/openid-connect/token"
     metrics_path: '/actuator/prometheus'
     scrape_interval: 2s
     static_configs:
       - targets: ['api-gateway:8080']
         labels:
-          application: 'Api Gateway'
+          application: 'api-gateway'
   - job_name: 'Config Server'
     metrics_path: '/actuator/prometheus'
     scrape_interval: 2s
     static_configs:
       - targets: ['config-server:1234']
         labels:
-          application: 'Config Server'
+          application: 'config-server'
   - job_name: 'consul-spring'
     scrape_interval: 3s
     consul_sd_configs:
@@ -35,13 +39,11 @@ scrape_configs:
       services:
       - data-service
       - event-service
-      - api-gateway
-      - config-service
     metrics_path: '/actuator/prometheus'
     relabel_configs:
       - source_labels: [__meta_consul_service_id]
-        regex: '(.*)-service'
+        regex: '(.*)-service-(.*)'
         replacement: '$1-service'
-        target_label: node
+        target_label: application
       - source_labels: [__meta_consul_service_id]
         target_label: instance

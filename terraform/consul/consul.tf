@@ -1,14 +1,22 @@
-terraform {
-  required_providers {
-    consul = {
-      source = "hashicorp/consul"
-      version = "2.17.0"
-    }
+resource "consul_service" "keycloak" {
+  name = "keycloak"
+  node = "${consul_node.compute.name}"
+  tags = ["identity", "authentication"]
+
+  check {
+    check_id                          = "service:keycloak"
+    name                              = "Keycloak health check"
+    status                            = "passing"
+    http                              = "http://keycloak:9999/health/ready"
+    tls_skip_verify                   = true
+    interval                          = "5s"
+    timeout                           = "1s"
   }
 }
 
-provider "consul" {
-  address    = "http://consul:8500"
+resource "consul_node" "compute" {
+  name    = "compute-keycloak"
+  address = "keycloak"
 }
 
 resource "consul_keys" "write" {

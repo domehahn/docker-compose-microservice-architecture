@@ -58,7 +58,8 @@ services:
 
   #docker compose run --rm terraform-consul init
   #docker compose run --rm terraform-consul plan
-  #docker compose run --rm terraform-consul apply
+  #docker compose run --rm terraform-consul apply -auto-approve
+  #docker compose run --rm terraform-consul destroy -auto-approve
   terraform-consul:
     image: hashicorp/terraform:0.14.10
     volumes:
@@ -72,11 +73,42 @@ services:
 
   #docker compose run --rm terraform-vault init
   #docker compose run --rm terraform-vault plan
-  #docker compose run --rm terraform-vault apply
+  #docker compose run --rm terraform-vault apply -auto-approve
+  #docker compose run --rm terraform-vault destroy -auto-approve
   terraform-vault:
     image: hashicorp/terraform:0.14.10
     volumes:
       - ./terraform/vault:/infra
+    env_file:
+      - ./terraform/terraform.env
+    working_dir: /infra
+    restart: unless-stopped
+    networks:
+      - microservice-network
+
+  #docker compose run --rm terraform-grafana init
+  #docker compose run --rm terraform-grafana plan
+  #docker compose run --rm terraform-grafana apply -auto-approve
+  #docker compose run --rm terraform-grafana destroy -auto-approve
+  terraform-grafana:
+    image: hashicorp/terraform:0.14.10
+    volumes:
+      - ./terraform/grafana:/infra
+    env_file:
+      - ./terraform/terraform.env
+    working_dir: /infra
+    restart: unless-stopped
+    networks:
+      - microservice-network
+
+  #docker compose run --rm terraform-keycloak init
+  #docker compose run --rm terraform-keycloak plan
+  #docker compose run --rm terraform-keycloak apply -auto-approve
+  #docker compose run --rm terraform-keycloak destroy -auto-approve
+  terraform-keycloak:
+    image: hashicorp/terraform:0.14.10
+    volumes:
+      - ./terraform/keycloak:/infra
     env_file:
       - ./terraform/terraform.env
     working_dir: /infra
@@ -303,6 +335,43 @@ services:
     networks:
       - microservice-network
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:19.0.1
+    container_name: keycloak
+    command: start-dev --features-disabled=admin2
+    env_file:
+      - ./keycloak/keycloak.env
+    ports:
+      - 8080:8080
+    depends_on:
+      - postgres
+    networks:
+      - microservice-network
+
+  curl-keycloak:
+    image: curlimages/curl:latest
+    container_name: curl-keycloak
+    command: >-
+      curl 
+      -X POST "http://keycloak:8080/realms/microservice/protocol/openid-connect/token"
+      -H "Content-Type: application/x-www-form-urlencoded"
+      -d "client_id=gateway"
+      -d "client_secret=0V08sRa6gtkfr26rT5f3JoZwGxqxzmC2"
+      -d "grant_type=client_credentials"
+      -d "scope=openid"
+    networks:
+      - microservice-network
+  
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    env_file:
+      - ./postgres/postgres.env
+    ports:
+      - 5432:5432
+    networks:
+      - microservice-network
+
   config-server:
     image: ghcr.io/domehahn/config-server:latest
     container_name: config-server
@@ -323,6 +392,7 @@ services:
   
   api-gateway:
     image: ghcr.io/domehahn/api-gateway:latest
+    #image: api-gateway:latest
     container_name: api-gateway
     env_file:
       - ./api-gateway/api-gateway.env
@@ -332,7 +402,11 @@ services:
     volumes:
       - filebeat_data:/tmp
     depends_on:
-      redis-master:
+      redis-sentinel-1:
+        condition: service_started
+      redis-sentinel-2:
+        condition: service_started
+      redis-sentinel-3:
         condition: service_started
       config-server:
         condition: service_started
@@ -341,6 +415,7 @@ services:
 
   event-service:
     image: ghcr.io/domehahn/event-service:latest
+    #image: event-service:latest
     container_name: event-service
     env_file:
       - ./event-service/event-service.env
